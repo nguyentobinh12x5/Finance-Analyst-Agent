@@ -1,0 +1,5 @@
+python-dotenv
+loguru
+pydantic
+pydantic-settings
+requests
