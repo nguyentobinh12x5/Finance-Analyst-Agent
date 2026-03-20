@@ -323,5 +323,4 @@ show_doc("Market.equity")
 ## 🛠️ Quick Reference
 
 ### Task: Get Stock List
-```
 Free: vnstock.Listing.al
