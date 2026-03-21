@@ -35,8 +35,9 @@ Thay vì cho AI đọc tin tức, chúng ta ép AI nhìn công ty qua 14 chỉ s
 
 ### Quyết định 2: Tội Ác Nhìn Lén Tương Lai (Look-ahead Bias / Data Leakage)
 **Tội ác:** Trong Data Science thông thường (như bài học vạch đường để xe tự lái), ta thường đổ hết dữ liệu trộn lộn xộn ngẫu nhiên (Shuffle = True), sau đó bốc 80% học, 20% Train.
-Nếu làm vậy với Chứng khoán: Tức là bạn cho con Robot AI học trước "Báo cáo Tài chính Của Năm 2024", rồi ném bài kiểm tra "Chứng khoán năm 2022" ra bắt nó thi! Nó là Cỗ Máy Thời Gian! Mọi điểm số nó thi đậu đều là đồ giả khi cầm ra đánh tiền thật ngoài đời.
-**Cách Trị Tội (Tính năng `StandardScaler`):** Hàm tỷ lệ hóa (Scaler) trong khung Code của chúng ta chỉ được gọi lệnh `.fit()` trên dữ liệu của Tập Huấn Luyện Quá khứ. Nó bị ép buộc không bao giờ được phép dùng kính hiển vi soi Đáy/Đỉnh của Tập Test (Bài thi tương lai).
+Nếu làm vậy với Chứng khoán: Tức là bạn cho con Robot AI học trước "Báo cáo Tài chính Của Năm 2024", rồi ném bài kiểm tra "Chứng khoán năm 2022" ra bắt nó thi! Nó là Cỗ Máy Thời Gian! Mọi điểm số nó thi đậu đều là đồ giả khi cầm ra đánh tiền thật ngoài đời. => Sẽ không xử lý chia tệp random và chia đôi 80/20 như thông thường mà áp dụng Walk-Forward
+
+**Cách Trị Tội (Tính năng `StandardScaler`):** Kéo các giá trị về 1 scale
 
 ### Quyết định 3: Walk-Forward Validation (Cỗ Máy Chạy Thi Giám Thị)
 Thay vì chẻ một phát Train 80% / Test 20%. Bạn quyết định thiết kế phương pháp **Walk-Forward Cuốn Chiếu**.
@@ -44,6 +45,7 @@ Thay vì chẻ một phát Train 80% / Test 20%. Bạn quyết định thiết k
 - Bước 1: Ông đưa Tài liệu Lịch sử từ 2011-2015 cho 4 học sinh (4 Model AI). Bắt chúng nó cày bừa. Sau đó Tịch thu tài liệu. Đưa đề năm 2016 ra bắt làm Tươi. Ghi điểm vào sổ (File Predictions). Xóa Trí Nhớ Bọn Học sinh.
 - Bước 2: Ông lại gom Học sinh mới, đưa lại tài liệu từ 2012-2016. Tịch thu. Bắt thi làm bài năm 2017. Ghi điểm vào số. Xóa trí nhớ.
 👉 Quy trình cực kì tàn khốc và khép kín này khiến con AI vĩnh viễn không bao giờ được học lật trước Đề thi của tương lai, một chiến trường sát phạt 100% minh bạch!
+=> Trong project của tôi, tôi đã lựa chọn Walk-Forward với với windowsize = 12 nghĩa là cố định 12 quý, sẽ tiến lên 1 quý để test. Tuy nhiên có phương pháp khác là Expanding window, là cứ mỗi lần test xong thì sẽ cộng dồn vào để train cho lần tiếp theo. Việc lựa chọn Walk-Forward bởi trong thị trường tài chính "Market Regin Shift" xảy ra thường xuyên, nghĩa là thị trường sẽ có những giai đoạn khác nhau (ví dụ: giai đoạn tăng trưởng, giai đoạn suy thoái, giai đoạn đi ngang). Nếu sử dụng Expanding window, mô hình sẽ bị ảnh hưởng bởi các giai đoạn trước đó, dẫn đến việc dự đoán không chính xác. Trong khi đó, Walk-Forward Validation giúp mô hình thích ứng với các giai đoạn khác nhau của thị trường.
 
 ### Quyết định 4: Bức tường Than Ngăn Cắt Train / Trade
 Thay vì trộn code mua bán trực tiếp vào file AI. Tôi đã xây dựng Lớp vỏ `backtest_engine.py` nhận vào Ma Trận Trọng Số.
