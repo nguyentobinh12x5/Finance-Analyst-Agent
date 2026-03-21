@@ -232,3 +232,51 @@ class EnsembleMLStrategy:
         plt.show()
         
         return ticker_df
+
+    def generate_weights_matrix(self, top_k=5, chosen_model='XGBoost'):
+        """
+        Giai đoạn 1: Biến Đổi Lợi Nhuận Dự Báo -> Ma Trận Trọng Số Bố Trí Vốn
+        Chỉ chọn mua TOP K cổ phiếu có dự báo y_return cao nhất trong mỗi mốc thời gian.
+        """
+        if not hasattr(self, 'predictions_df'):
+            print("Chưa có predictions_df. Vui lòng chạy walk_forward_competition() trước!")
+            return None
+            
+        pred_col = f'pred_{chosen_model}'
+        if pred_col not in self.predictions_df.columns:
+            print(f"Mô hình {chosen_model} chưa được huấn luyện!")
+            return None
+            
+        df = self.predictions_df.copy()
+        
+        # Đổi Tên Cột Thời Gian thành định dạng Ngày để khớp chuẩn Thư viện bt
+        df['Date'] = pd.to_datetime(df['Quarter_Time'])
+        
+        weights_list = []
+        
+        # Duyệt qua từng Quý để chốt danh sách mua
+        for date, group in df.groupby('Date'):
+            # Lọc bớt các mã dự báo âm (Giải pháp Đầu tư An toàn)
+            positive_preds = group[group[pred_col] > 0]
+            
+            if positive_preds.empty:
+                # Nếu thị trường quá xấu dự báo toàn âm, cắt ra tiền mặt (Trọng số = 0)
+                continue
+                
+            # Xếp hạng Top K Danh Tướng
+            top_stocks = positive_preds.nlargest(top_k, pred_col)
+            
+            # Chia đều vốn (Allocation 1/K)
+            weight_per_stock = 1.0 / len(top_stocks)
+            
+            # Tạo dictionary phân bổ vốn
+            step_weights = {'Date': date}
+            for ticker in top_stocks['ticker']:
+                step_weights[ticker] = weight_per_stock
+                
+            weights_list.append(step_weights)
+            
+        weights_df = pd.DataFrame(weights_list).set_index('Date')
+        weights_df = weights_df.fillna(0.0) # Những mã không được gọi tên = 0% vốn
+        
+        return weights_df
