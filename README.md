@@ -65,3 +65,9 @@ If you are coming from a Software Engineering background without prior knowledge
 
 - 🇻🇳 **[Vietnamese Technical Guide](doc_vietnamese.md)** (Dành cho người mới)
 - 🇬🇧 **[English Technical Guide](doc_english.md)** 
+
+## Inspried by AI4Finacne-Foundation
+- https://github.com/AI4Finance-Foundation/FinRL-Trading
+
+## Author
+- Nguyen To Binh
