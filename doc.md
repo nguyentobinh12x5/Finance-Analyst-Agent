@@ -1,5 +1,0 @@
-(Mở rộng thêm) Trong thực chiến Quỹ định lượng, người ta còn đo những gì?
-Tuy nhiên, dùng Toán học (MSE) không giải quyết hết vấn đề tiền bạc đầu tư. Nên một khi đã tìm ra Mô hình Top 1, tụi mình thường dùng dự án Backtest (Như FinRL) gắn thêm 2 thứ nữa để tính toán:
-
-Độ chính xác Điều hướng (Directional Accuracy / Win-rate): Model hô "Mua" (Dự báo sinh lời Dương > 0) và "Bán" (Dự báo Âm < 0) có đúng hướng của thị trường thực tế hay không? Chẳng thà nó đoán sai biên độ (Dự báo lãi 5% nhưng thực tế lãi 10%), còn hơn nó đoán sai hướng (Dự báo Lãi nhưng Cổ phiếu rớt đáy).
-Tỉ lệ Sharpe của Danh mục (Sharpe Ratio): Đo bằng cách giả vờ cho thuật toán cầm $10,000. Dựa vào dự đoán, cuối mỗi Quý AI tự động bốc 5 cổ VN30 có tiềm năng Top 5 cao nhất gom vào rổ và bán khống 5 con có y_return tệ nhất. Sau 20 quý, tài khoản của AI tăng lên $40,000 thì nó chính thức là 1 Cỗ Máy Kiếm Tiền Thật!
