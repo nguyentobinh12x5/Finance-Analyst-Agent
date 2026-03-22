@@ -1,4 +1,4 @@
-pandas==3.0.1
+pandas==2.2.3
 numpy==2.4.2
 scikit-learn==1.8.0
 xgboost==3.2.0
@@ -9,3 +9,4 @@ vnstock==3.4.2
 vnstock3==3.2.1
 bt==1.1.4
 ipykernel==7.2.0
+streamlit>=1.40.0

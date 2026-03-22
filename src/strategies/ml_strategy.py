@@ -167,7 +167,7 @@ class EnsembleMLStrategy:
         scores = list(leaderboard.values())
         
         sns.barplot(x=model_names, y=scores, palette='coolwarm')
-        plt.title('Bảng Xếp Hạng Sai Số Mô Hình (Cột càng THẤP càng tốt)', fontsize=14, fontweight='bold')
+        plt.title('Model Error Leaderboard (Lower is Better)', fontsize=14, fontweight='bold')
         plt.ylabel('Mean Squared Error (MSE)')
         
         for i, v in enumerate(scores):
@@ -180,16 +180,16 @@ class EnsembleMLStrategy:
         
         # Đường lợi suất thực tế của Thị trường (Đen, in đậm)
         plt.plot(self.timeline_quarters, self.actual_history, 
-                 label='THỰC TẾ (Lợi suất TB Thị trường)', color='black', linewidth=4, marker='o')
+                 label='ACTUAL (Avg Market Return)', color='black', linewidth=4, marker='o')
         
         # Các đường dự báo của từng Mô hình (Đứt nét)
         colors = ['red', 'blue', 'green', 'orange']
         for (name, preds), color in zip(self.model_predictions_history.items(), colors):
-            plt.plot(self.timeline_quarters, preds, label=f'Dự báo: {name}', linestyle='--', marker='o')
+            plt.plot(self.timeline_quarters, preds, label=f'Predicted: {name}', linestyle='--', marker='o')
             
-        plt.title('Độ Nhạy Theo Thời Gian: Lợi suất Thực tế vs Dự báo qua Các Mùa Giải Walk-Forward', fontsize=14, fontweight='bold')
-        plt.xlabel('Quý Đánh Giá (Test Quarters)', fontsize=12)
-        plt.ylabel('Trung bình Lợi suất Logarit (y_return)', fontsize=12)
+        plt.title('Time Sensitivity: Actual vs Predicted Return Across Walk-Forward Quarters', fontsize=14, fontweight='bold')
+        plt.xlabel('Test Quarters', fontsize=12)
+        plt.ylabel('Average Log Return (y_return)', fontsize=12)
         plt.axhline(0, color='gray', linestyle='-', alpha=0.5) # Đường Zero cắt ngang
         plt.legend(loc='upper right', bbox_to_anchor=(1.05, 1.15))
         plt.grid(True, linestyle=':', alpha=0.6)
@@ -216,15 +216,15 @@ class EnsembleMLStrategy:
         # Format thời gian lại cho đẹp trên đồ thị
         x_labels = ticker_df['Quarter_Time'].apply(lambda x: str(pd.to_datetime(x).to_period('Q')))
         
-        plt.plot(x_labels, ticker_df['y_true'], label='THỰC TẾ (y_true)', color='black', linewidth=3, marker='o')
+        plt.plot(x_labels, ticker_df['y_true'], label='ACTUAL (y_true)', color='black', linewidth=3, marker='o')
         
         colors = ['red', 'blue', 'green', 'orange']
         for name, color in zip(self.models.keys(), colors):
-            plt.plot(x_labels, ticker_df[f'pred_{name}'], label=f'Dự báo: {name}', linestyle='--', marker='x', color=color)
+            plt.plot(x_labels, ticker_df[f'pred_{name}'], label=f'Predicted: {name}', linestyle='--', marker='x', color=color)
             
-        plt.title(f'Theo Dấu Lợi Suất Tương Lai Của Mã {ticker} (Thực Tế vs Dự Báo)', fontsize=14, fontweight='bold')
-        plt.xlabel('Quý Đánh Giá', fontsize=11)
-        plt.ylabel('Lợi suất kỳ vọng (y_return)', fontsize=11)
+        plt.title(f'Future Return Tracking for {ticker} (Actual vs Predicted)', fontsize=14, fontweight='bold')
+        plt.xlabel('Evaluation Quarter', fontsize=11)
+        plt.ylabel('Expected Return (y_return)', fontsize=11)
         plt.axhline(0, color='gray', linestyle='-', alpha=0.5)
         plt.legend(loc='upper right', bbox_to_anchor=(1.25, 1))
         plt.grid(True, linestyle=':', alpha=0.6)

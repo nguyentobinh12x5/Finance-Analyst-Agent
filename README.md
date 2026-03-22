@@ -16,6 +16,7 @@ The project strictly abides by the "Separation of Concerns" principle, mathemati
 1. **`src/data/data_fetcher.py` (Data Miner)**: Automatically connects to the VCI source (via vnstock API) to safely download 4 financial statements (Balance Sheet, Income Statement, Cash Flow, Ratios) without hitting API limits. It also dynamically aligns Quarterly Reports with actual Trading Prices.
 2. **`src/strategies/ml_strategy.py` (The AI Brain)**: Responsible for reading historical quarters (e.g., 2021-2023) and projecting out-of-sample expected values (`y_return`) for the subsequent quarter. Outputs a **Weights Matrix** to allocate capital perfectly across Top 5 best-performing models.
 3. **`src/backtest/backtest_engine.py` (The Arena)**: Blindly accepts the Weights Matrix from the AI Brain. It downloads Daily prices from VNSTOCK and executes trades exactly on schedule, yielding real-world performance metrics.
+4. **`src/dashboard/app.py` (Interactive Web Dashboard)**: A simple `streamlit` application that acts as a UI for configuring the hyperparameters, picking the AI model, and visualizing the equity curve dynamics interactively in your browser.
 
 ---
 
@@ -56,7 +57,16 @@ engine.run_simulation()
 engine.report_kpis() # Outputs Equity Curve
 ```
 
-### 3. Result
+### 3. Running the Interactive Streamlit Dashboard 🖥️
+
+If you prefer a UI instead of a Jupyter Notebook, you can launch the AI Quant Trading Dashboard directly in your browser:
+
+```bash
+streamlit run src/dashboard/app.py
+```
+*The dashboard provides real-time model comparisons, configurable hyperparameters (Train Quarters, Top K Stocks), exact transaction schedules, and the `bt` backtesting Equity Curve plotted natively inside the UI.*
+
+### 4. Result
 ![alt text](result.png)
 ---
 
