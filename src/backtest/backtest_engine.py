@@ -1,11 +1,9 @@
 import bt
 import pandas as pd
-import time
 import matplotlib.pyplot as plt
-from vnstock import Quote
 
 class BacktestEngine:
-    def __init__(self, weights_df, initial_capital=10000.0):
+    def __init__(self, weights_df, initial_capital=10000.0, prices_df=None):
         """
         Giai đoạn 2: Sàn Đấu Lịch Sử - Nhận Ma trận Trọng số đã qua xử lý từ AI đẻ Đóng gói vào Thư viện `bt`.
         """
@@ -22,47 +20,72 @@ class BacktestEngine:
         # Mở rộng thêm 1 Quý để đo chặng cuối
         self.end_date = self.weights_df.index.max() + pd.DateOffset(months=3)
 
-    def fetch_daily_prices(self):
-        
-        str_start = self.start_date.strftime("%Y-%m-%d")
-        str_end = self.end_date.strftime("%Y-%m-%d")
-        
-        print(f"Đang gọi API VNStock tải Giá Hàng Ngày từ {str_start} đến {str_end}...")
-        price_dict = {}
-        
-        for ticker in self.tickers:
-            time.sleep(0.2) # Chống ban IP
-            try:
-                # Gọi VNStock API với nguồn VCI theo hệ thống gốc
-                quote = Quote(source="VCI", symbol=ticker)
-                df_ticker = quote.history(start=str_start, end=str_end, interval="1D")
-                
-                if not df_ticker.empty and 'close' in df_ticker.columns:
-                    df_ticker['time'] = pd.to_datetime(df_ticker['time'])
-                    df_ticker.set_index('time', inplace=True)
-                    price_dict[ticker] = df_ticker['close']
-                else:
-                    print(f"⚠️ {ticker}: Không có dữ liệu giá giai đoạn này.")
-            except Exception as e:
-                print(f"Lỗi tải {ticker}: {e}")
-                
-        # Gộp toàn bộ Giá của các con Cổ phiếu vào 1 Bảng chữ nhật
-        self.prices_df = pd.DataFrame(price_dict)
-        
-        # Xử lý Ngày nghỉ lễ chứng khoán (Kéo dài giá của ngày hôm trước)
-        self.prices_df = self.prices_df.ffill().dropna()
-        
-        print("✅ Tải Giá VNStock Thành Công!")
-        return self.prices_df
+        if prices_df is not None:
+            self.prices_df = self._prepare_prices(prices_df)
+
+    @staticmethod
+    def build_prices_from_fundamental_data(df, tickers=None, date_col='Quarter_Time', price_col='adj_close_q'):
+        """
+        Tạo ma trận giá local từ file raw_fundamental_data.csv đã lưu sẵn.
+        Không gọi API. Giá dùng cột adj_close_q theo từng Quarter_Time.
+        """
+        required_cols = {'ticker', date_col, price_col}
+        missing_cols = required_cols - set(df.columns)
+        if missing_cols:
+            raise ValueError(f"Thiếu cột trong dữ liệu local để backtest: {sorted(missing_cols)}")
+
+        price_data = df[['ticker', date_col, price_col]].copy()
+        if tickers is not None:
+            price_data = price_data[price_data['ticker'].isin(tickers)]
+
+        price_data[date_col] = pd.to_datetime(price_data[date_col], errors='coerce')
+        price_data[price_col] = pd.to_numeric(price_data[price_col], errors='coerce')
+        price_data = price_data.dropna(subset=['ticker', date_col, price_col])
+
+        prices_df = price_data.pivot_table(
+            index=date_col,
+            columns='ticker',
+            values=price_col,
+            aggfunc='last'
+        )
+        prices_df = prices_df.sort_index().ffill()
+        prices_df.index.name = 'Date'
+        return prices_df
+
+    def _prepare_prices(self, prices_df):
+        prices = prices_df.copy()
+        prices.index = pd.to_datetime(prices.index)
+        prices = prices.sort_index()
+
+        missing_tickers = [ticker for ticker in self.tickers if ticker not in prices.columns]
+        if missing_tickers:
+            raise ValueError(f"Thiếu giá local cho các mã: {missing_tickers}")
+
+        prices = prices[self.tickers].ffill().dropna(how='all')
+
+        missing_dates = self.weights_df.index.difference(prices.index)
+        if not missing_dates.empty:
+            prices = prices.reindex(prices.index.union(self.weights_df.index)).sort_index().ffill()
+
+        prices = prices.loc[self.start_date:self.end_date]
+        prices = prices.dropna(how='all')
+
+        if prices.empty:
+            raise ValueError("Ma trận giá local rỗng. Kiểm tra cột Quarter_Time/adj_close_q trong CSV.")
+
+        return prices
 
     def run_simulation(self):
         """
         Thiết lập Chiến lược, Gắn Ma Trận Trọng Số vào bt và Phóng Backtest!
         """
         if not hasattr(self, 'prices_df'):
-            self.fetch_daily_prices()
+            raise ValueError(
+                "BacktestEngine cần prices_df local. Hãy tạo bằng "
+                "BacktestEngine.build_prices_from_fundamental_data(raw_df, tickers=weights_df.columns)."
+            )
 
-        print("\nĐang khởi chiếu Sàn Đấu Backtest (Simulation)...")
+        print("\nĐang khởi chiếu Sàn Đấu Backtest từ dữ liệu CSV local (không gọi API)...")
 
         # bt.algos.WeighTarget tự động nhìn vào bảng self.weights_df để tái phân bổ vốn.
         strategy = bt.Strategy('AI_Quantitative_Fund', [
@@ -72,7 +95,7 @@ class BacktestEngine:
             bt.algos.Rebalance()
         ])
 
-        # Kết hợp Giá Hàng Ngày và Chiến lược để bắt đầu đua
+        # Kết hợp Giá Local và Chiến lược để bắt đầu đua
         self.backtest = bt.Backtest(strategy, self.prices_df, initial_capital=self.initial_capital)
         
         # Chạy giả lập
